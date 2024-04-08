@@ -3,7 +3,6 @@ import ErrorPage from "./ErrorPage.js"
 import LoadingPage from "./LoadingPage.js"
 
 import Actions from './Actions.js'
-
 const row = (bill) => {
   return (`
     <tr>
@@ -18,9 +17,9 @@ const row = (bill) => {
     </tr>
     `)
   }
-
 const rows = (data) => {
-  return (data && data.length) ? data.map(bill => row(bill)).join("") : ""
+  console.log(data)
+  return (data && data.length) ? data.sort((a,b)=>new Date(b.date).getTime()-new Date(a.date).getTime()).map(bill => row(bill)).join("") : ""
 }
 
 export default ({ data: bills, loading, error }) => {
