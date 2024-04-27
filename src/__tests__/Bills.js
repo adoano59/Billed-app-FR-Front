@@ -10,6 +10,124 @@ import { localStorageMock } from "../__mocks__/localStorage.js"
 import '@testing-library/jest-dom'
 import router from "../app/Router.js"
 import Bills from "../containers/Bills.js"
+import mockStore from "../__mocks__/store"
+import {getBills} from "../containers/Bills.js"
+import { data } from "jquery"
+
+
+// test d'intégration GET
+describe("Given I am a user connected as Employee", () => {
+  describe("When I navigate to Bills", () => {
+   test("fetches bills from mock API GET", async () => {
+
+    jest.spyOn(mockStore, "bills")
+    Object.defineProperty(window, 'localStorage', { value: localStorageMock })
+    window.localStorage.setItem('user', JSON.stringify({
+      type: 'Employee'
+    }))
+
+    const root = document.createElement("div")
+    root.setAttribute("id", "root")
+    document.body.append(root)
+    router()
+    const html = BillsUI({ data: bills});
+    mockStore.bills.mockImplementationOnce(() => {
+      return {
+        list: () => {
+          return Promise.resolve()
+        }
+      }
+    })
+    // Définir une fonction onNavigate mockée
+    const onNavigate = (pathname) => {
+      document.body.innerHTML = ROUTES({ pathname })
+    }
+    document.body.innerHTML = html;
+      const billsContainer = new Bills({
+      document, onNavigate, store: mockStore, bills: bills, localStorage: window.localStorage
+    })
+     await waitFor(() => screen.getAllByTestId("tbody"))
+
+      //Obtenir toutes les factures affichées sur la page
+      const billElements = screen.getAllByTestId("tbody")
+
+    
+
+        expect(billElements).toBeTruthy()
+     })
+   })
+  describe("When an error occurs on API", () => {
+    beforeEach(() => {
+      jest.spyOn(mockStore, "bills")
+      Object.defineProperty(
+          window,
+          'localStorage',
+          { value: localStorageMock }
+      )
+     window.localStorage.setItem('user', JSON.stringify({
+       type: 'Employee'
+     }))
+      const root = document.createElement("div")
+      root.setAttribute("id", "root")
+      document.body.appendChild(root)
+      router()
+    })
+    test("fetches bills from an API and fails with 404 message error", async () => {
+
+      mockStore.bills.mockImplementationOnce(() => {
+        return {
+          list : () =>  {
+            return Promise.reject(new Error("Erreur 404"))
+          }
+        }})
+       window.onNavigate(ROUTES_PATH.Bills)
+
+      // Injecter le HTML de la page des factures dans le document body
+      document.body.innerHTML = BillsUI({ data: bills, loading: false, error: "Erreur 404" })
+
+      // Définir une fonction onNavigate mockée
+      const onNavigate = (pathname) => {
+        document.body.innerHTML = ROUTES({ pathname })
+      }
+      // Créer une instance de la classe Bills
+      const billsContainer = new Bills({
+        document, onNavigate, store: mockStore, bills, localStorage: window.localStorage
+      })
+
+     
+      await new Promise(process.nextTick);
+      const message = await screen.getByText(/Erreur 404/)
+      expect(message).toBeTruthy()
+    })
+
+    test("fetches messages from an API and fails with 500 message error", async () => {
+
+      mockStore.bills.mockImplementationOnce(() => {
+        return {
+          list : () =>  {
+            return Promise.reject(new Error("Erreur 500"))
+          }
+        }})
+        window.onNavigate(ROUTES_PATH.Bills)
+
+      // Injecter le HTML de la page des factures dans le document body
+      document.body.innerHTML = BillsUI({ data: bills, loading: false, error: "Erreur 500" })
+
+      // Définir une fonction onNavigate mockée
+      const onNavigate = (pathname) => {
+        document.body.innerHTML = ROUTES({ pathname })
+      }
+      // Créer une instance de la classe Bills
+      const billsContainer = new Bills({
+        document, onNavigate, store: mockStore, bills, localStorage: window.localStorage
+      })
+
+      await new Promise(process.nextTick);
+      const message = await screen.getByText(/Erreur 500/)
+      expect(message).toBeTruthy()
+    })
+  })
+})
 
 
 describe("Given I am connected as an employee", () => {
@@ -101,7 +219,6 @@ describe("Given I am connected as an employee", () => {
           modal: jest.fn(),
           width: jest.fn(),
           find: jest.fn().mockImplementationOnce(() => { return { html: jest.fn() } })
-
         }
       });
       // Récupérer toutes les icônes de l'œil
@@ -111,6 +228,7 @@ describe("Given I am connected as an employee", () => {
       fireEvent.click(eyeIcons[0])
       // Vérifier si handleClickIconEyes est appelée après chaque clic sur une icône de l'œil
       expect(handleClickIconEyes).toHaveBeenCalled()
+
     })
 
     test("Then bills should be ordered from earliest to latest", () => {
@@ -122,33 +240,6 @@ describe("Given I am connected as an employee", () => {
     })
   })
 })
-// test d'intégration GET
-//describe("Given I am a user connected as Employee", () => {
-  //describe("When I navigate to Bills", () => {
-   // test("fetches bills from mock API GET", async () => {
 
-      //Object.defineProperty(window, 'localStorage', { value: localStorageMock })
-   //   window.localStorage.setItem('user', JSON.stringify({
-      //  type: 'Employee'
-     // }))
 
-     // const root = document.createElement("div")
-     // root.setAttribute("id", "root")
-     // document.body.append(root)
-    //  router()
-     // window.onNavigate(ROUTES_PATH.Bills)
-     // await waitFor(() => screen.getAllByTestId("tbody"))
-
-      // Obtenir toutes les factures affichées sur la page
-      //const billElements = screen.getAllByTestId("tbody")
-
-      // Vérifier si chaque facture est affichée avec  le statut formatés
-     // billElements.forEach((billElement, index) => {
-      //  const billData = bills[index]
-
-       // expect(billElement).toHaveTextContent(billData.status)
-     // })
-   // })
-  //})
-//})
 
